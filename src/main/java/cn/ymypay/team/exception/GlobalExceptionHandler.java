@@ -1,19 +1,20 @@
 package cn.ymypay.team.exception;
 
-import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotRoleException;
-import cn.dev33.satoken.util.SaResult;
 import cn.ymypay.team.common.Result;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
+
+import java.sql.SQLIntegrityConstraintViolationException;
 
 /**
  * @author lvjinfa
@@ -28,14 +29,22 @@ public class GlobalExceptionHandler {
      * 自定义txt异常
      */
     @ExceptionHandler(YmwlTXTException.class)
-    public String handleRuntimeException(YmwlTXTException e) {
+    public String ymwlTXTException(YmwlTXTException e) {
         return "fail";
     }
     /**
      * 自定义异常
      */
     @ExceptionHandler(YmwlException.class)
-    public Result<String> handleRuntimeException(YmwlException e) {
+    public Result<String> ymwlException(YmwlException e) {
+//        e.printStackTrace();
+        return Result.fail(e.getMessage());
+    }
+    /**
+     * 自定义异常
+     */
+    @ExceptionHandler(WebClientException.class)
+    public Result<String> webClientException(WebClientException e) {
 //        e.printStackTrace();
         return Result.fail(e.getMessage());
     }
@@ -44,7 +53,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public Result<String> handleRuntimeException(RuntimeException e) {
-//        e.printStackTrace();
+        e.printStackTrace();
         return Result.fail(e.getMessage());
     }
     /**
@@ -85,6 +94,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(value = NullPointerException.class)
     public Result<String> nullPointerException(NullPointerException e) {
+        e.printStackTrace();
         return Result.fail(500, "服务器错误");
     }
     /**
@@ -115,8 +125,9 @@ public class GlobalExceptionHandler {
      * @return
      */
     @ExceptionHandler(value = HttpMessageNotReadableException.class)
-    public Result<String> notRoleException(HttpMessageNotReadableException e) {
-        return Result.fail(400, "丢失参数");
+    public Result<String> httpMessageNotReadableException(HttpMessageNotReadableException e) {
+//        e.printStackTrace();
+        return Result.fail(400, "丢失参数或参数异常");
     }
     /**
      * Servle原生异常
@@ -124,8 +135,25 @@ public class GlobalExceptionHandler {
      * @return
      */
     @ExceptionHandler(value = ServletException.class)
-    public Result<String> notRoleException(ServletException e) {
-//        e.printStackTrace();
+    public Result<String> servletException(ServletException e) {
+        e.printStackTrace();
         return Result.fail(500, "服务器错误");
+    }
+    /**
+     * 处理数据库唯一键约束冲突异常（最精准）
+     */
+    @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
+    public Result<String> handleSQLIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException e) {
+        // 提取关键信息，返回友好提示
+        String message = "数据已存在，无法重复添加";
+//        e.printStackTrace();
+        return Result.fail(400, message);
+    }
+    /**
+     * 处理Spring封装的重复键异常（兼容不同场景）
+     */
+    @ExceptionHandler(DuplicateKeyException.class)
+    public Result<String> handleDuplicateKeyException(DuplicateKeyException e) {
+        return Result.fail(400, "数据已存在，无法重复添加");
     }
 }

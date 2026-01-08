@@ -35,8 +35,8 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
         log.info("开始更新填充...");
         UserInfoVo userInfo = UserUtils.getUserInfo();
         if (userInfo != null) {
-            this.strictInsertFill(metaObject, "updatedBy", String.class, userInfo.getUuid());
+            this.strictUpdateFill(metaObject, "updatedBy", String.class, userInfo.getUuid());
         }
-        this.strictInsertFill(metaObject, "createdTime", Date.class, new Date());
+        this.strictUpdateFill(metaObject, "updatedTime", Date.class, new Date());
     }
 }

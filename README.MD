@@ -16,6 +16,68 @@
 2. 在`application.properties`或`application-dev.properties`或`application-pord.properties`文件中配置数据库连接信息、Redis连接信息、AES加密密钥等，AES加密(打开即AES加密+数据签名校验)、防抖、xss拦截都有开关，可根据需求开启，不建议XSS拦截和AES加密同时开启。
 3. 根据需要修改`application.properties`文件中的其他配置。
 4. 启动项目。
+## 开发方法
+### 1.数据库设计
+1. java 实体必须拥有，表字段必须拥有参考 java 实体：
+```java
+package 包名;
+
+import java.util.Date;
+
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+@Data
+public class 表名{
+    //自增
+    @TableId(value = "id", type = IdType.AUTO)
+    private Integer id;
+    //主键
+    @TableField(fill = FieldFill.INSERT)
+    private String uuid;
+    //乐观锁
+    @Version
+    private Integer revision;
+    //创建人
+    @TableField(fill = FieldFill.INSERT)
+    private String createdBy;
+    //创建时间
+    @TableField(fill = FieldFill.INSERT)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 指定 JSON 序列化格式和时区
+    private Date createdTime;
+    //更新人
+    @TableField(fill = FieldFill.UPDATE)
+    private String updatedBy;
+    //更新时间
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 指定 JSON 序列化格式和时区
+    private Date updatedTime;
+    //删除时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 指定 JSON 序列化格式和时区
+    @TableLogic
+    private Date deleteTime;
+}
+```
+2. 判断是否登录及登录后存放数据（userinfovo自行更改，必须拥有 role，如果不需要请修改src/main/java/cn/ymypay/team/config/StpInterfaceImpl.java）：  
+   使用satoken方法：
+```java
+StpUtil.login(用户的 uuid 或用户的 id);
+UserInfoVo userInfoVo = new UserInfoVo();
+// 放入用户数据后
+userInfoVo.setLoginExpireTime(DateUtils.nowSeconds().getTime() + StpUtil.getTokenTimeout());
+userInfoVo.setToken(StpUtil.getTokenValue());
+UserUtils.setUserInfo(userInfoVo);
+```
+   后续拿取当前用户登录数据：
+```java
+UserInfoVo userInfoVo = UserUtils.getUserInfo();
+```
+   判断登录方法：参考satoken即可，一键拦截路由在：src/main/java/cn/ymypay/team/config/WebMvcConfig.java。如果是一般异步就是把注释的取消掉，把webmvc的注释掉。  
+   判断userInfoVo是否为空也可以  
+判断身份：  
+   参考satoken或直接读取userinfovo
 ## 其他
 ### 加解密问题
 加密算法使用AES，加密模式为ECB，填充方式为AES/ECB/PKCS5Padding，密钥长度为128位，初始向量长度为16位。

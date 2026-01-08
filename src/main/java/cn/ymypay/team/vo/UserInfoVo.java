@@ -22,6 +22,7 @@ public class UserInfoVo {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8") // 指定 JSON 序列化格式和时区
     private Date vipTime;
     private String faceimg;
+    private String role;
     private String token;
     private Long loginExpireTime;
 }
